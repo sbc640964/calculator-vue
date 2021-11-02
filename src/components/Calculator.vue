@@ -51,7 +51,11 @@ export default {
           ['+']
       ],
 
-      result: 0,
+      result: null,
+
+      currentOperator: null,
+
+      statusNewScreen: false,
 
       currentNumber: '0',
     }
@@ -67,19 +71,66 @@ export default {
       key = String(key);
 
       if(['0','1','2','3','4','5','6','7','8','9','00', '.'].includes(key)) {
+        if(this.statusNewScreen){
+          this.currentNumber = '0';
+        }
         const temp = this.currentNumber + key;
         if (temp.match(/\./g)?.length > 1) return;
+        this.statusNewScreen = false;
         return this.currentNumber = temp.indexOf('.') === temp.length - 1 ? temp : String(Number(temp))
       }
 
       switch (key) {
         case 'AC':
         case 'C' :
-          this.currentNumber = '0';
+          this.reset();
           break;
         case '>' :
           this.currentNumber = this.currentNumber.slice(0, - 1);
+          if(!this.currentNumber) this.currentNumber = '0';
+          break;
+        case 'X':
+        case '÷':
+        case '-':
+        case '+':
+          if(this.statusNewScreen){
+            return this.currentOperator = key;
+          }
+          this.result = this.result && this.currentOperator
+              ? this.getResult(this.result, this.currentOperator, this.currentNumber)
+              : this.result = this.currentNumber;
+          this.currentOperator = key;
+          this.statusNewScreen = true;
+          break;
+        case '=' :
+          if(this.result && this.currentOperator) {
+            this.currentNumber = String(
+                this.result =
+                    this.getResult(this.result, this.currentOperator, this.currentNumber)
+            )
+            this.currentOperator = null;
+            this.statusNewScreen = true;
+          }
       }
+    },
+
+    getResult(num, operator, numb){
+      let result;
+      switch (operator){
+        case 'X' : result = Number(num) * Number(numb); break;
+        case '÷' : result = Number(num) / Number(numb); break;
+        case '+' : result = Number(num) + Number(numb); break;
+        case '-' : result = Number(num) - Number(numb); break;
+      }
+      this.currentNumber = String(result);
+      return result;
+    },
+
+    reset(){
+      this.currentNumber = '0';
+      this.statusNewScreen = false;
+      this.result = null;
+      this.currentOperator = null;
     }
   }
 }
